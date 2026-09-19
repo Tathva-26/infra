@@ -40,7 +40,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in .env}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in .env}
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/healthz || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
