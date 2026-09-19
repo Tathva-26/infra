@@ -75,3 +75,4 @@ services:
 
 volumes:
   tathva_db:
+    name: tathva-26_tathva_db
