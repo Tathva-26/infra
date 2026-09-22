@@ -21,8 +21,22 @@ services:
       retries: 5
       start_period: 20s
 
+  redis:
+    image: redis:7-alpine
+    container_name: tathva-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
   backend-v2:
-    image: ghcr.io/tathva-26/tathva-backend-26:admin-panel
+    image: ghcr.io/tathva-26/tathva-backend-26-admin-panel
     container_name: tathva-backend
     restart: unless-stopped
     ports:
@@ -30,15 +44,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     dns:
       - 8.8.8.8
       - 1.1.1.1
     env_file:
+      - .env # GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
       - backend-v2.env
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-tathva}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in .env}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in .env}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/healthz || exit 1"]
       interval: 30s
@@ -59,11 +72,9 @@ services:
       - 8.8.8.8
       - 1.1.1.1
     env_file:
+      - .env # GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
       - hackathon.env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/hackathon?schema=public
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in .env}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in .env}
       TRUST_PROXY: ${TRUST_PROXY:-1}
     healthcheck:
       # No curl/wget in node:22-slim; use Node's fetch instead.
@@ -76,3 +87,5 @@ services:
 volumes:
   tathva_db:
     name: tathva-26_tathva_db
+  redis_data:
+    name: tathva-26_redis_data
