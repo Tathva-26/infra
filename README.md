@@ -46,5 +46,30 @@ docker exec tathva-postgres pg_dumpall -U postgres > backup-$(date +%F).sql
 
 ## Nginx
 
-Proxy each hostname to its loopback port with TLS. Razorpay webhook:
-`https://<hackathon-api>/api/v1/webhooks/razorpay`.
+Config lives in `nginx/`, copied onto the host (nginx itself is not
+containerized here). Proxy each hostname to its loopback port with TLS.
+
+| File | Host path | Purpose |
+|---|---|---|
+| `nginx/tathva` | `/etc/nginx/sites-available/tathva` (symlinked into `sites-enabled/`) | Server blocks for `api.tathva.org` and `api-hack.tathva.org`. TLS via Certbot origin cert, proxies to `tathva-backend` (`:8000`) / `hackathon-backend` (`:8080`), `client_max_body_size` per upstream, honeypot `/​.env` routes. |
+| `nginx/cloudflare.conf` | `/etc/nginx/conf.d/cloudflare.conf` | `set_real_ip_from` for Cloudflare's IP ranges + `CF-Connecting-IP`, so `$remote_addr` / rate limiting see the real client IP, not Cloudflare's edge IP. |
+| `nginx/ratelimit.conf` | `/etc/nginx/conf.d/ratelimit.conf` | Defines the `api` `limit_req_zone` (15r/s, burst 100) referenced by `tathva`. |
+
+`cloudflare.conf` and `ratelimit.conf` must load before `tathva`
+references them — `conf.d/*.conf` is included from `nginx.conf`'s `http {}`
+block ahead of `sites-enabled/`, which is why they're split out instead of
+living inside `tathva` directly.
+
+Deploy/update:
+
+```bash
+sudo cp nginx/cloudflare.conf /etc/nginx/conf.d/cloudflare.conf
+sudo cp nginx/ratelimit.conf /etc/nginx/conf.d/ratelimit.conf
+sudo cp nginx/tathva /etc/nginx/sites-available/tathva
+sudo ln -sf /etc/nginx/sites-available/tathva /etc/nginx/sites-enabled/tathva
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+`client_max_body_size` in `tathva` gates request body size before it
+ever reaches the app — a body over the limit gets nginx's own `413` page. 
+Keep it comfortably above each app's own upload cap (e.g. `IMAGE_MAX_MB` in tathva-backend) to avoid that.

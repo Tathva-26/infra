@@ -1,0 +1,83 @@
+server {
+    server_name api.tathva.org;
+
+    limit_req zone=api burst=100 nodelay; # Rate Limiting Configuration
+
+    # Troll Bots and Hackers
+    location = /.env {
+        default_type text/plain;
+	return 200 "Our secrets are more secure than your mom's.\n";
+    }
+
+    # Troll Bots and Hackers
+    location = /api/.env {
+        default_type text/plain;
+	return 200 "Our secrets are more secure than your mom's.\n";
+    }
+
+    # Forward requests to tathva-backend container
+    location / {
+	client_max_body_size 2m;
+
+        proxy_pass http://127.0.0.1:8000;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    listen 443 ssl; # managed by Certbot
+
+    ssl_certificate /etc/nginx/ssl/origin.pem;
+    ssl_certificate_key /etc/nginx/ssl/origin.key;
+}
+
+server {
+    server_name api-hack.tathva.org;
+
+    limit_req zone=api burst=100 nodelay; # Rate Limiting Configuration
+
+    # Troll Bots and Hackers
+    location = /.env {
+        default_type text/plain;
+        return 200 "Our secrets are more secure than your mom's.\n";
+    }
+
+    # Troll Bots and Hackers
+    location = /api/.env {
+        default_type text/plain;
+        return 200 "Our secrets are more secure than your mom's.\n";
+    }
+
+    # Forward requests to hackathon-backend container
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    listen 443 ssl; # managed by Certbot
+
+    ssl_certificate /etc/nginx/ssl/origin.pem;
+    ssl_certificate_key /etc/nginx/ssl/origin.key;
+}
+
+
+server {
+    if ($host = api.tathva.org) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    listen 80;
+    server_name api.tathva.org;
+    return 404; # managed by Certbot
+}
