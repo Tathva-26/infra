@@ -72,4 +72,4 @@ sudo nginx -t && sudo systemctl reload nginx
 
 `client_max_body_size` in `tathva` gates request body size before it
 ever reaches the app — a body over the limit gets nginx's own `413` page. 
-Keep it comfortably above each app's own upload cap (e.g. `IMAGE_MAX_MB` in tathva-backend) to avoid that.
+Keep it comfortably above each app's own upload cap (e.g. `IMAGE_EVENT_MAX_KB` in tathva-backend) to avoid that.
