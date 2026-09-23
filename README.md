@@ -96,13 +96,15 @@ by nature, because latency is dominated by the TIQR round trip and more CPU or
 memory does not shorten it. The dashboard therefore keeps them out of the
 general latency panels and shows them in their own "TIQR-backed routes" section.
 
-Routes that call TIQR (route labels are the Express pattern, `baseUrl` + path):
+Routes that call TIQR (route labels are the Express pattern, `baseUrl` + path,
+so `GET /api/referrals` is labelled `/api/referrals/` with a trailing slash;
+Prometheus regexes are anchored, so labels must match exactly):
 
 | Route | TIQR call (`backend_v2/src/lib/tiqr.js`) |
 |---|---|
 | `POST /api/booking/create` | `listUserBookings` (duplicate check), then `createBooking` |
 | `GET /api/booking/my` | `listUserBookings` |
-| `GET /api/referrals` | `getReferrerStats` |
+| `GET /api/referrals/` | `getReferrerStats` |
 | `GET /api/referrals/code` | `ensureReferralCode` |
 | `POST /api/admin/events/:id/sync` | `syncEventToTiqr` |
 | `PATCH /api/admin/events/:id/publish` | `syncEventToTiqr` on first publish |

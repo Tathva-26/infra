@@ -354,7 +354,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "A",
           "editorMode": "code",
           "range": true
@@ -496,8 +496,8 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
+        "h": 10,
+        "w": 24,
         "x": 0,
         "y": 5
       },
@@ -551,87 +551,6 @@
       },
       "options": {
         "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 9,
-      "type": "timeseries",
-      "title": "Total requests/min",
-      "description": "Total request rate per minute, 5m window.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 5
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "60 * sum(rate(http_requests_total[5m]))",
-          "refId": "A",
-          "editorMode": "code",
-          "range": true,
-          "legendFormat": "total"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: req/min",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "lineInterpolation": "smooth",
-            "spanNulls": false,
-            "axisBorderShow": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true,
@@ -644,7 +563,7 @@
       }
     },
     {
-      "id": 10,
+      "id": 9,
       "type": "timeseries",
       "title": "Error rates (4xx / 5xx)",
       "description": "Share of requests answered with 4xx (client errors) and 5xx (server errors), 5m window.",
@@ -656,7 +575,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 15
       },
       "targets": [
         {
@@ -736,7 +655,7 @@
       }
     },
     {
-      "id": 11,
+      "id": 10,
       "type": "timeseries",
       "title": "Latency percentiles (excl. TIQR routes)",
       "description": "Duration percentiles for routes that do not call TIQR.",
@@ -748,7 +667,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 22
       },
       "targets": [
         {
@@ -756,7 +675,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "A",
           "editorMode": "code",
           "range": true,
@@ -767,7 +686,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "B",
           "editorMode": "code",
           "range": true,
@@ -778,7 +697,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "C",
           "editorMode": "code",
           "range": true,
@@ -839,7 +758,7 @@
       }
     },
     {
-      "id": 12,
+      "id": 11,
       "type": "timeseries",
       "title": "Target availability",
       "description": "1 = up, 0 = down.",
@@ -851,7 +770,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 22
       },
       "targets": [
         {
@@ -928,19 +847,19 @@
       }
     },
     {
-      "id": 13,
+      "id": 12,
       "type": "table",
-      "title": "Slowest routes (p95, last 5m)",
+      "title": "Top 10 slowest routes (p95, last 5m)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Every route ranked by p95 latency, slowest first. Req/min shows how much traffic each one carries; a slow route with little traffic matters less.",
+      "description": "The 10 slowest routes by p95 latency, slowest first. Req/min shows how much traffic each one carries; a slow route with little traffic matters less.",
       "gridPos": {
-        "h": 9,
+        "h": 12,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 31
       },
       "targets": [
         {
@@ -948,7 +867,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, method, route) (rate(http_request_duration_seconds_bucket[5m]))) > 0",
+          "expr": "topk(10, label_join(histogram_quantile(0.95, sum by (le, method, route) (rate(http_request_duration_seconds_bucket[5m]))) > 0, \"endpoint\", \" \", \"method\", \"route\"))",
           "refId": "A",
           "editorMode": "code",
           "instant": true,
@@ -960,7 +879,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "60 * sum by (method, route) (rate(http_requests_total[5m])) > 0",
+          "expr": "label_join(60 * sum by (method, route) (rate(http_requests_total[5m])) > 0, \"endpoint\", \" \", \"method\", \"route\")",
           "refId": "B",
           "editorMode": "code",
           "instant": true,
@@ -972,31 +891,34 @@
         {
           "id": "joinByField",
           "options": {
-            "byField": "route",
+            "byField": "endpoint",
             "mode": "inner"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "endpoint",
+                "Value #A",
+                "Value #B"
+              ]
+            }
           }
         },
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "Time": true,
-              "Time 1": true,
-              "Time 2": true,
-              "method 2": true
-            },
             "renameByName": {
-              "route": "Route",
-              "method 1": "Method",
-              "method": "Method",
+              "endpoint": "Endpoint",
               "Value #A": "p95",
               "Value #B": "Req/min"
             },
             "indexByName": {
-              "Method": 0,
-              "Route": 1,
-              "p95": 2,
-              "Req/min": 3
+              "Endpoint": 0,
+              "p95": 1,
+              "Req/min": 2
             }
           }
         },
@@ -1102,7 +1024,7 @@
       }
     },
     {
-      "id": 14,
+      "id": 13,
       "type": "row",
       "title": "TIQR-backed routes",
       "collapsed": false,
@@ -1110,12 +1032,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 43
       },
       "panels": []
     },
     {
-      "id": 15,
+      "id": 14,
       "type": "timeseries",
       "title": "p95 by TIQR route",
       "description": "p95 latency per TIQR-backed route: booking create/my, referrals, event publish/sync.",
@@ -1127,7 +1049,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 40
+        "y": 44
       },
       "targets": [
         {
@@ -1135,7 +1057,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, method, route) (rate(http_request_duration_seconds_bucket{route=~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, method, route) (rate(http_request_duration_seconds_bucket{route=~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "A",
           "editorMode": "code",
           "range": true,
@@ -1196,7 +1118,7 @@
       }
     },
     {
-      "id": 16,
+      "id": 15,
       "type": "timeseries",
       "title": "TIQR-backed 5xx rate",
       "description": "5xx share on TIQR-backed routes. TIQR failures surface as 502/500.",
@@ -1208,7 +1130,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 40
+        "y": 44
       },
       "targets": [
         {
@@ -1216,7 +1138,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (sum(rate(http_requests_total{route=~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\",status=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_requests_total{route=~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m]))",
+          "expr": "100 * (sum(rate(http_requests_total{route=~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\",status=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_requests_total{route=~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m]))",
           "refId": "A",
           "editorMode": "code",
           "range": true,
@@ -1273,7 +1195,7 @@
       }
     },
     {
-      "id": 17,
+      "id": 16,
       "type": "row",
       "title": "PostgreSQL",
       "collapsed": false,
@@ -1281,12 +1203,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 52
       },
       "panels": []
     },
     {
-      "id": 18,
+      "id": 17,
       "type": "timeseries",
       "title": "Connections by database",
       "description": "Active backends per database.",
@@ -1298,7 +1220,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 49
+        "y": 53
       },
       "targets": [
         {
@@ -1363,7 +1285,7 @@
       }
     },
     {
-      "id": 19,
+      "id": 18,
       "type": "timeseries",
       "title": "Connection usage",
       "description": "Backends as a share of max_connections.",
@@ -1375,7 +1297,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 49
+        "y": 53
       },
       "targets": [
         {
@@ -1445,7 +1367,7 @@
       }
     },
     {
-      "id": 20,
+      "id": 19,
       "type": "timeseries",
       "title": "Cache hit ratio",
       "description": "Buffer cache hits / (hits + disk reads). Aim for > 99%.",
@@ -1457,7 +1379,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 57
+        "y": 61
       },
       "targets": [
         {
@@ -1523,7 +1445,7 @@
       }
     },
     {
-      "id": 21,
+      "id": 20,
       "type": "timeseries",
       "title": "Transactions/s",
       "description": "Commits plus rollbacks per database.",
@@ -1535,7 +1457,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 57
+        "y": 61
       },
       "targets": [
         {
@@ -1600,7 +1522,7 @@
       }
     },
     {
-      "id": 22,
+      "id": 21,
       "type": "row",
       "title": "Host",
       "collapsed": false,
@@ -1608,12 +1530,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 69
       },
       "panels": []
     },
     {
-      "id": 23,
+      "id": 22,
       "type": "timeseries",
       "title": "CPU load (1m)",
       "description": "1-minute load average vs. core count.",
@@ -1625,7 +1547,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 66
+        "y": 70
       },
       "targets": [
         {
@@ -1701,7 +1623,7 @@
       }
     },
     {
-      "id": 24,
+      "id": 23,
       "type": "timeseries",
       "title": "Memory available",
       "description": "Dashed line = alert threshold (10%).",
@@ -1713,7 +1635,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 66
+        "y": 70
       },
       "targets": [
         {
@@ -1783,7 +1705,7 @@
       }
     },
     {
-      "id": 25,
+      "id": 24,
       "type": "row",
       "title": "Redis",
       "collapsed": false,
@@ -1791,12 +1713,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 74
+        "y": 78
       },
       "panels": []
     },
     {
-      "id": 26,
+      "id": 25,
       "type": "timeseries",
       "title": "Memory used",
       "description": "Resident memory used by Redis.",
@@ -1808,7 +1730,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 75
+        "y": 79
       },
       "targets": [
         {
@@ -1873,7 +1795,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 26,
       "type": "timeseries",
       "title": "Keys",
       "description": "Total keys across all Redis logical databases.",
@@ -1885,7 +1807,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 75
+        "y": 79
       },
       "targets": [
         {
@@ -1950,7 +1872,7 @@
       }
     },
     {
-      "id": 28,
+      "id": 27,
       "type": "timeseries",
       "title": "Evicted keys/s",
       "description": "Non-zero means Redis is at maxmemory and dropping keys.",
@@ -1962,7 +1884,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 83
+        "y": 87
       },
       "targets": [
         {
