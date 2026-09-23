@@ -230,7 +230,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "rpm",
+          "unit": "suffix: req/min",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -284,7 +284,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))",
+          "expr": "100 * (sum(rate(http_requests_total{status=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_requests_total[5m]))",
           "refId": "A",
           "editorMode": "code",
           "range": true
@@ -336,8 +336,8 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "p95 latency",
-      "description": "Alert fires above 1s for 10m.",
+      "title": "p95 latency (API)",
+      "description": "p95 over routes that do not call TIQR. TIQR-backed routes are in their own section.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -354,7 +354,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "A",
           "editorMode": "code",
           "range": true
@@ -384,7 +384,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
-          "decimals": 3
+          "decimals": 1
         },
         "overrides": []
       },
@@ -496,7 +496,7 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 5
@@ -516,7 +516,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "rpm",
+          "unit": "suffix: req/min",
           "color": {
             "mode": "palette-classic"
           },
@@ -552,7 +552,7 @@
       "options": {
         "legend": {
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
           "calcs": [
             "mean",
@@ -576,7 +576,7 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
         "y": 5
@@ -596,7 +596,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "rpm",
+          "unit": "suffix: req/min",
           "color": {
             "mode": "palette-classic"
           },
@@ -646,17 +646,17 @@
     {
       "id": 10,
       "type": "timeseries",
-      "title": "4xx rate",
-      "description": "Share of 4xx responses.",
+      "title": "Error rates (4xx / 5xx)",
+      "description": "Share of requests answered with 4xx (client errors) and 5xx (server errors), 5m window.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 7,
+        "w": 24,
         "x": 0,
-        "y": 13
+        "y": 14
       },
       "targets": [
         {
@@ -669,6 +669,17 @@
           "editorMode": "code",
           "range": true,
           "legendFormat": "4xx"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (sum(rate(http_requests_total{status=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_requests_total[5m]))",
+          "refId": "B",
+          "editorMode": "code",
+          "range": true,
+          "legendFormat": "5xx"
         }
       ],
       "fieldConfig": {
@@ -709,10 +720,14 @@
       },
       "options": {
         "legend": {
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true,
-          "calcs": []
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -723,95 +738,14 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "5xx rate",
-      "description": "Share of 5xx responses. Dashed line = alert threshold.",
+      "title": "Latency percentiles (excl. TIQR routes)",
+      "description": "Duration percentiles for routes that do not call TIQR.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 13
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "100 * sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))",
-          "refId": "A",
-          "editorMode": "code",
-          "range": true,
-          "legendFormat": "5xx"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "lineInterpolation": "smooth",
-            "spanNulls": false,
-            "axisBorderShow": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "transparent",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 2
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 12,
-      "type": "timeseries",
-      "title": "Latency percentiles",
-      "description": "Request duration percentiles. Dashed line = p95 alert threshold.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 21
@@ -822,7 +756,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "A",
           "editorMode": "code",
           "range": true,
@@ -833,7 +767,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "B",
           "editorMode": "code",
           "range": true,
@@ -844,7 +778,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "C",
           "editorMode": "code",
           "range": true,
@@ -871,7 +805,7 @@
               "group": "A"
             },
             "thresholdsStyle": {
-              "mode": "dashed"
+              "mode": "off"
             }
           },
           "min": 0,
@@ -879,12 +813,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent",
+                "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
               }
             ]
           }
@@ -909,7 +839,7 @@
       }
     },
     {
-      "id": 13,
+      "id": 12,
       "type": "timeseries",
       "title": "Target availability",
       "description": "1 = up, 0 = down.",
@@ -918,7 +848,7 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
         "y": 21
@@ -998,7 +928,352 @@
       }
     },
     {
+      "id": 13,
+      "type": "table",
+      "title": "Slowest routes (p95, last 5m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Every route ranked by p95 latency, slowest first. Req/min shows how much traffic each one carries; a slow route with little traffic matters less.",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, method, route) (rate(http_request_duration_seconds_bucket[5m]))) > 0",
+          "refId": "A",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "60 * sum by (method, route) (rate(http_requests_total[5m])) > 0",
+          "refId": "B",
+          "editorMode": "code",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "route",
+            "mode": "inner"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "method 2": true
+            },
+            "renameByName": {
+              "route": "Route",
+              "method 1": "Method",
+              "method": "Method",
+              "Value #A": "p95",
+              "Value #B": "Req/min"
+            },
+            "indexByName": {
+              "Method": 0,
+              "Route": 1,
+              "p95": 2,
+              "Req/min": 3
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "p95",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 0.3
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Req/min"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: req/min"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
       "id": 14,
+      "type": "row",
+      "title": "TIQR-backed routes",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "panels": []
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "p95 by TIQR route",
+      "description": "p95 latency per TIQR-backed route: booking create/my, referrals, event publish/sync.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, method, route) (rate(http_request_duration_seconds_bucket{route=~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
+          "refId": "A",
+          "editorMode": "code",
+          "range": true,
+          "legendFormat": "{{method}} {{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "spanNulls": false,
+            "axisBorderShow": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "TIQR-backed 5xx rate",
+      "description": "5xx share on TIQR-backed routes. TIQR failures surface as 502/500.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (sum(rate(http_requests_total{route=~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\",status=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_requests_total{route=~\"/api/booking/create|/api/booking/my|/api/referrals|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m]))",
+          "refId": "A",
+          "editorMode": "code",
+          "range": true,
+          "legendFormat": "5xx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "lineInterpolation": "smooth",
+            "spanNulls": false,
+            "axisBorderShow": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 17,
       "type": "row",
       "title": "PostgreSQL",
       "collapsed": false,
@@ -1006,12 +1281,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 48
       },
       "panels": []
     },
     {
-      "id": 15,
+      "id": 18,
       "type": "timeseries",
       "title": "Connections by database",
       "description": "Active backends per database.",
@@ -1023,7 +1298,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 49
       },
       "targets": [
         {
@@ -1088,7 +1363,7 @@
       }
     },
     {
-      "id": 16,
+      "id": 19,
       "type": "timeseries",
       "title": "Connection usage",
       "description": "Backends as a share of max_connections.",
@@ -1100,7 +1375,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 49
       },
       "targets": [
         {
@@ -1170,7 +1445,7 @@
       }
     },
     {
-      "id": 17,
+      "id": 20,
       "type": "timeseries",
       "title": "Cache hit ratio",
       "description": "Buffer cache hits / (hits + disk reads). Aim for > 99%.",
@@ -1182,7 +1457,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 57
       },
       "targets": [
         {
@@ -1248,7 +1523,7 @@
       }
     },
     {
-      "id": 18,
+      "id": 21,
       "type": "timeseries",
       "title": "Transactions/s",
       "description": "Commits plus rollbacks per database.",
@@ -1260,7 +1535,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 57
       },
       "targets": [
         {
@@ -1325,84 +1600,7 @@
       }
     },
     {
-      "id": 19,
-      "type": "timeseries",
-      "title": "Database size",
-      "description": "On-disk size per database.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 46
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "pg_database_size_bytes",
-          "refId": "A",
-          "editorMode": "code",
-          "range": true,
-          "legendFormat": "{{datname}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "lineInterpolation": "smooth",
-            "spanNulls": false,
-            "axisBorderShow": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 20,
+      "id": 22,
       "type": "row",
       "title": "Host",
       "collapsed": false,
@@ -1410,12 +1608,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 65
       },
       "panels": []
     },
     {
-      "id": 21,
+      "id": 23,
       "type": "timeseries",
       "title": "CPU load (1m)",
       "description": "1-minute load average vs. core count.",
@@ -1427,7 +1625,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 66
       },
       "targets": [
         {
@@ -1503,7 +1701,7 @@
       }
     },
     {
-      "id": 22,
+      "id": 24,
       "type": "timeseries",
       "title": "Memory available",
       "description": "Dashed line = alert threshold (10%).",
@@ -1515,7 +1713,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 66
       },
       "targets": [
         {
@@ -1585,89 +1783,7 @@
       }
     },
     {
-      "id": 23,
-      "type": "timeseries",
-      "title": "Root filesystem available",
-      "description": "Dashed line = alert threshold (15%). Prometheus shares this disk with Postgres.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 62
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "100 * node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}",
-          "refId": "A",
-          "editorMode": "code",
-          "range": true,
-          "legendFormat": "available"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "lineInterpolation": "smooth",
-            "spanNulls": false,
-            "axisBorderShow": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "transparent",
-                "value": 15
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 24,
+      "id": 25,
       "type": "row",
       "title": "Redis",
       "collapsed": false,
@@ -1675,12 +1791,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 74
       },
       "panels": []
     },
     {
-      "id": 25,
+      "id": 26,
       "type": "timeseries",
       "title": "Memory used",
       "description": "Resident memory used by Redis.",
@@ -1692,7 +1808,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 70
+        "y": 75
       },
       "targets": [
         {
@@ -1757,7 +1873,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 27,
       "type": "timeseries",
       "title": "Keys",
       "description": "Total keys across all Redis logical databases.",
@@ -1769,7 +1885,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 70
+        "y": 75
       },
       "targets": [
         {
@@ -1834,7 +1950,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 28,
       "type": "timeseries",
       "title": "Evicted keys/s",
       "description": "Non-zero means Redis is at maxmemory and dropping keys.",
@@ -1846,7 +1962,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 83
       },
       "targets": [
         {

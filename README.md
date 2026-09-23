@@ -89,6 +89,36 @@ prometheus_tsdb_head_series
 prometheus_tsdb_storage_blocks_bytes
 ```
 
+### TIQR-backed routes
+
+TIQR is the external event and booking platform. Routes that call it are slow
+by nature, because latency is dominated by the TIQR round trip and more CPU or
+memory does not shorten it. The dashboard therefore keeps them out of the
+general latency panels and shows them in their own "TIQR-backed routes" section.
+
+Routes that call TIQR (route labels are the Express pattern, `baseUrl` + path):
+
+| Route | TIQR call (`backend_v2/src/lib/tiqr.js`) |
+|---|---|
+| `POST /api/booking/create` | `listUserBookings` (duplicate check), then `createBooking` |
+| `GET /api/booking/my` | `listUserBookings` |
+| `GET /api/referrals` | `getReferrerStats` |
+| `GET /api/referrals/code` | `ensureReferralCode` |
+| `POST /api/admin/events/:id/sync` | `syncEventToTiqr` |
+| `PATCH /api/admin/events/:id/publish` | `syncEventToTiqr` on first publish |
+
+Deliberately not in the list: `PUT /api/user` (calls TIQR only when a profile
+first becomes complete), `PATCH /api/admin/events/:id` (its route label is
+shared with `GET`), and `/api/tiqr-events` (routes are commented out).
+
+The list is hard-coded as a `route=~"..."` regex in the dashboard queries
+(`monitoring/grafana/dashboards/tathva.json`): the "p95 latency (API)" tile,
+"Latency percentiles (excl. TIQR routes)" and the two TIQR panels. When a route
+starts or stops calling TIQR, update the regex in all of them.
+
+Panels show total route time, not TIQR's share of it. To separate the two, add
+an outbound histogram in `tiqr.js` `request()`.
+
 ### Runbook
 
 ```bash
