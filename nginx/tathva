@@ -15,6 +15,11 @@ server {
 	return 200 "Our secrets are more secure than your mom's.\n";
     }
 
+    # No public /metrics; Prometheus scrapes inside the compose network.
+    location = /metrics {
+        deny all;
+    }
+
     # Forward requests to tathva-backend container
     location / {
 	client_max_body_size 2m;
@@ -50,6 +55,11 @@ server {
     location = /api/.env {
         default_type text/plain;
         return 200 "Our secrets are more secure than your mom's.\n";
+    }
+
+    # No public /metrics here either.
+    location = /metrics {
+        deny all;
     }
 
     # Forward requests to hackathon-backend container

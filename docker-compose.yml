@@ -2,11 +2,19 @@ name: tathva-26
 
 # One VM: shared Postgres + both backends on one network. App repos only build images.
 
+# 3 x 10MB log files per service.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:16-alpine
     container_name: tathva-postgres
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -25,6 +33,7 @@ services:
     image: redis:7-alpine
     container_name: tathva-redis
     restart: unless-stopped
+    logging: *default-logging
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "127.0.0.1:6379:6379" # loopback only; backend connects directly
@@ -41,6 +50,7 @@ services:
     image: ghcr.io/tathva-26/tathva-backend-26-admin-panel
     container_name: tathva-backend
     restart: unless-stopped
+    logging: *default-logging
     # Longer than the app's own 15s shutdown deadline, so Docker's SIGKILL
     # never arrives before the graceful drain.
     stop_grace_period: 20s
@@ -55,8 +65,10 @@ services:
       - 8.8.8.8
       - 1.1.1.1
     env_file:
-      - .env # GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+      - .env # GOOGLE_*, METRICS_TOKEN
       - backend-v2.env
+    environment:
+      SERVICE_NAME: backend-v2
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8000/healthz || exit 1"]
       interval: 30s
@@ -68,6 +80,7 @@ services:
     image: ghcr.io/tathva-26/tathva-26-hackathon-backend:latest
     container_name: hackathon-backend
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - "127.0.0.1:8080:8080" # loopback only; nginx terminates TLS
     depends_on:
@@ -89,8 +102,106 @@ services:
       retries: 3
       start_period: 60s
 
+  # ---- Monitoring: exporters + Prometheus + Grafana ----
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.20.1
+    container_name: tathva-postgres-exporter
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "127.0.0.1:9187:9187"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/tathva?sslmode=disable
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.92.0
+    container_name: tathva-redis-exporter
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "127.0.0.1:9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_ADDR: redis://redis:6379
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: tathva-node-exporter
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "127.0.0.1:9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.28.0
+    container_name: tathva-blackbox
+    restart: unless-stopped
+    logging: *default-logging
+    volumes:
+      - ./monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    depends_on:
+      - backend-v2
+
+  prometheus:
+    image: prom/prometheus:v3.13.3
+    container_name: tathva-prometheus
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=3GB
+    depends_on:
+      - postgres-exporter
+      - redis-exporter
+      - node-exporter
+      - blackbox
+
+  grafana:
+    image: grafana/grafana:12.4.11
+    container_name: tathva-grafana
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
 volumes:
   tathva_db:
     name: tathva-26_tathva_db
   redis_data:
     name: tathva-26_redis_data
+  prometheus_data:
+    name: tathva-26_prometheus_data
+  grafana_data:
+    name: tathva-26_grafana_data

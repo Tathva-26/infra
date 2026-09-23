@@ -7,6 +7,15 @@ App repos only **build** images. This repo decides **what runs**.
 | `tathva-postgres` | `postgres:16-alpine` | none | `tathva` + `hackathon` |
 | `tathva-backend` | `ghcr.io/tathva-26/tathva-backend-26:admin-panel` | `127.0.0.1:8000` | `tathva` |
 | `hackathon-backend` | `ghcr.io/tathva-26/tathva-26-hackathon-backend:latest` | `127.0.0.1:8080` | `hackathon` |
+| `tathva-postgres-exporter` | `prometheuscommunity/postgres-exporter:v0.20.1` | `127.0.0.1:9187` | — (scrapes `tathva`) |
+| `tathva-redis-exporter` | `oliver006/redis_exporter:v1.92.0` | `127.0.0.1:9121` | — |
+| `tathva-node-exporter` | `prom/node-exporter:v1.12.1` | `127.0.0.1:9100` | — |
+| `tathva-blackbox` | `prom/blackbox-exporter:v0.28.0` | none | — (probes `/healthz`) |
+| `tathva-prometheus` | `prom/prometheus:v3.13.3` | `127.0.0.1:9090` | — (7d / 3GB retention) |
+| `tathva-grafana` | `grafana/grafana:12.4.11` | `127.0.0.1:3000` | — |
+
+Only the main backend (`backend-v2`) is monitored. The hackathon backend is
+intentionally untracked.
 
 ## First deploy
 
@@ -44,6 +53,53 @@ Order doesn't matter: backends retry until postgres is healthy.
 docker exec tathva-postgres pg_dumpall -U postgres > backup-$(date +%F).sql
 ```
 
+Monitoring state (dashboard state — metrics themselves rebuild from
+scrapes, 7d retention):
+
+```bash
+docker run --rm -v tathva-26_prometheus_data:/data -v "$PWD":/backup alpine \
+  tar czf /backup/prometheus-data-$(date +%F).tar.gz -C /data .
+docker run --rm -v tathva-26_grafana_data:/data -v "$PWD":/backup alpine \
+  tar czf /backup/grafana-data-$(date +%F).tar.gz -C /data .
+```
+
+## Monitoring (plan.md)
+
+Prometheus scrapes the main backend's `/metrics` (RED: `http_requests_total`,
+`http_request_duration_seconds`, `nodejs_*`), the postgres/redis/node
+exporters, and blackbox-probes `/healthz`. Grafana is **SSH port-forward
+only** — no nginx vhost:
+
+```bash
+ssh -N -L 3000:127.0.0.1:3000 <user>@<vm>
+# → http://localhost:3000 ; Prometheus at http://127.0.0.1:9090 on the VM
+```
+
+All monitoring config is code: `monitoring/prometheus.yml` (15s scrapes),
+`monitoring/blackbox.yml`,
+`monitoring/grafana/provisioning/` (Prometheus datasource and the single
+"Tathva Overview" dashboard with Traffic / Postgres / Host / Redis sections).
+Secrets (`GRAFANA_ADMIN_PASSWORD`, `METRICS_TOKEN`) live in `.env`, never in
+git. Alerting is not configured yet.
+
+Verify sizing post-deploy (plan assumes ~5–10k series, 0.7–1.4GB for 7d):
+
+```promql
+prometheus_tsdb_head_series
+prometheus_tsdb_storage_blocks_bytes
+```
+
+### Runbook
+
+```bash
+docker compose up -d <svc>          # restart one service
+docker compose logs --tail=100 <svc>
+docker exec tathva-postgres pg_isready -U postgres -d tathva
+docker exec tathva-redis redis-cli ping
+curl -f http://127.0.0.1:8000/healthz
+curl -f http://127.0.0.1:9090/-/healthy
+```
+
 ## Nginx
 
 Config lives in `nginx/`, copied onto the host (nginx itself is not
@@ -73,3 +129,7 @@ sudo nginx -t && sudo systemctl reload nginx
 `client_max_body_size` in `tathva` gates request body size before it
 ever reaches the app — a body over the limit gets nginx's own `413` page. 
 Keep it comfortably above each app's own upload cap (e.g. `IMAGE_EVENT_MAX_KB` in tathva-backend) to avoid that.
+
+`tathva` also has `location = /metrics { deny all; }` in both server blocks,
+so the backend's Prometheus endpoint is compose-network-only and can never
+leak through the public proxy (exact-match wins over `location /`).

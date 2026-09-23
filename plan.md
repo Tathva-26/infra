@@ -61,7 +61,7 @@ monitoring/
     provisioning/datasources/prom.yml    # http://prometheus:9090
     provisioning/dashboards/dash.yml
     provisioning/alerting/contactPoints.yaml  # telegram
-    provisioning/alerting/policies.yaml       # all alerts → telegram, repeat 4h
+    provisioning/alerting/policies.yaml       # all alerts → telegram, repeat 30m
   dashboards/{red,postgres,host-redis}.json
 .env.example                             # + GRAFANA_ADMIN_PASSWORD, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 /etc/logrotate.d/tathva-nginx            # rotate 7, daily, compress (host)
@@ -92,9 +92,9 @@ logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
 
 ## 6. Grafana (3 dashboards max, provisioned as code)
 
-1. **RED per service**: req/s, 5xx %, p50/p95/p99.
-2. **Postgres**: connections, locks, cache-hit, bloat.
-3. **Host+Redis**: CPU/mem/disk/net, Redis mem/keys/evictions.
+1. **RED**: req/s, 5xx %, top routes, in-flight, p50/p95/p99.
+2. **Postgres**: connections, pool usage %, cache-hit, size, transactions/s.
+3. **Host+Redis**: CPU/mem/net, Redis mem/keys/evictions (no disk panel).
 
 ## 7. Traffic / sizing note
 
