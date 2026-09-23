@@ -26,6 +26,8 @@ services:
     container_name: tathva-redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379" # loopback only; backend connects directly
     volumes:
       - redis_data:/data
     healthcheck:
@@ -39,6 +41,9 @@ services:
     image: ghcr.io/tathva-26/tathva-backend-26-admin-panel
     container_name: tathva-backend
     restart: unless-stopped
+    # Longer than the app's own 15s shutdown deadline, so Docker's SIGKILL
+    # never arrives before the graceful drain.
+    stop_grace_period: 20s
     ports:
       - "127.0.0.1:8000:8000" # loopback only; nginx terminates TLS
     depends_on:
