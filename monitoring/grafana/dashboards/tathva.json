@@ -204,8 +204,8 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Requests/s",
-      "description": "Total request rate, 5m window.",
+      "title": "Requests/min",
+      "description": "Total request rate per minute, 5m window.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -222,7 +222,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_requests_total[5m]))",
+          "expr": "60 * sum(rate(http_requests_total[5m]))",
           "refId": "A",
           "editorMode": "code",
           "range": true
@@ -230,7 +230,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
+          "unit": "rpm",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -244,7 +244,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
-          "decimals": 2
+          "decimals": 0
         },
         "overrides": []
       },
@@ -489,8 +489,8 @@
     {
       "id": 8,
       "type": "timeseries",
-      "title": "Requests/s by route",
-      "description": "Request rate per route, 5m window.",
+      "title": "Requests/min by route",
+      "description": "Request rate per route per minute, 5m window.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -507,7 +507,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (route) (rate(http_requests_total[5m]))",
+          "expr": "60 * sum by (route) (rate(http_requests_total[5m]))",
           "refId": "A",
           "editorMode": "code",
           "range": true,
@@ -516,7 +516,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
+          "unit": "rpm",
           "color": {
             "mode": "palette-classic"
           },
@@ -569,8 +569,8 @@
     {
       "id": 9,
       "type": "timeseries",
-      "title": "In-flight requests",
-      "description": "Concurrent requests currently being served.",
+      "title": "Total requests/min",
+      "description": "Total request rate per minute, 5m window.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -587,16 +587,16 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(http_requests_in_flight)",
+          "expr": "60 * sum(rate(http_requests_total[5m]))",
           "refId": "A",
           "editorMode": "code",
           "range": true,
-          "legendFormat": "in-flight"
+          "legendFormat": "total"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "rpm",
           "color": {
             "mode": "palette-classic"
           },
@@ -1760,7 +1760,7 @@
       "id": 26,
       "type": "timeseries",
       "title": "Keys",
-      "description": "Key count per logical DB.",
+      "description": "Total keys across all Redis logical databases.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1777,11 +1777,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (db) (redis_db_keys)",
+          "expr": "sum(redis_db_keys)",
           "refId": "A",
           "editorMode": "code",
           "range": true,
-          "legendFormat": "{{db}}"
+          "legendFormat": "keys"
         }
       ],
       "fieldConfig": {
