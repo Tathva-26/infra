@@ -336,8 +336,8 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "p95 latency (API)",
-      "description": "p95 over routes that do not call TIQR. TIQR-backed routes are in their own section.",
+      "title": "p95 latency (overall)",
+      "description": "p95 over all routes, including TIQR-backed ones.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -354,7 +354,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
           "refId": "A",
           "editorMode": "code",
           "range": true
@@ -406,8 +406,8 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "DB connections used",
-      "description": "Backends as a share of max_connections.",
+      "title": "p95 latency (API)",
+      "description": "p95 over routes that do not call TIQR. TIQR-backed routes are in their own section.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -424,7 +424,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * sum(pg_stat_database_numbackends) / sum(pg_settings_max_connections)",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{route!~\"/api/booking/create|/api/booking/my|/api/referrals/|/api/referrals/code|/api/admin/events/:id/(publish|sync)\"}[5m])))",
           "refId": "A",
           "editorMode": "code",
           "range": true
@@ -432,7 +432,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
+          "unit": "s",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -442,11 +442,11 @@
               },
               {
                 "color": "orange",
-                "value": 70
+                "value": 0.5
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 1
               }
             ]
           },
