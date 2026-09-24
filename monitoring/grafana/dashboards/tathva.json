@@ -1874,8 +1874,8 @@
     {
       "id": 27,
       "type": "timeseries",
-      "title": "Evicted keys/s",
-      "description": "Non-zero means Redis is at maxmemory and dropping keys.",
+      "title": "Cache hit ratio",
+      "description": "Share of Redis key lookups that found the key: hits / (hits + misses). Only meaningful for cache-style use; lookups for keys that are legitimately absent also count as misses.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1892,16 +1892,16 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(redis_evicted_keys_total[5m])",
-          "refId": "A",
           "editorMode": "code",
           "range": true,
-          "legendFormat": "evicted"
+          "refId": "A",
+          "legendFormat": "hit ratio",
+          "expr": "rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
+          "unit": "percentunit",
           "color": {
             "mode": "palette-classic"
           },
@@ -1931,7 +1931,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "max": 1
         },
         "overrides": []
       },
