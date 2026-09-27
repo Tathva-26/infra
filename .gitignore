@@ -1,3 +1,4 @@
 .env
 backend-v2.env
+backend-v2.staging.env
 hackathon.env

@@ -47,7 +47,7 @@ services:
       start_period: 10s
 
   backend-v2:
-    image: ghcr.io/tathva-26/tathva-backend-26-admin-panel
+    image: ghcr.io/tathva-26/tathva-backend-26-main
     container_name: tathva-backend
     restart: unless-stopped
     logging: *default-logging
