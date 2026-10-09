@@ -82,6 +82,35 @@ server {
 
 
 server {
+    server_name map-api.tathva.org;
+
+    # Looser than `api`: attendees often share one campus NAT IP and the PWA
+    # polls /api/schedule. The app rate-limits /login itself.
+    limit_req zone=map burst=300 nodelay;
+
+    client_max_body_size 2m;
+
+    # Forward requests to tify-map-api container
+    location / {
+        proxy_pass http://127.0.0.1:8787;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # map-api trusts exactly one hop (TRUST_PROXY=1): this one.
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    listen 443 ssl;
+
+    ssl_certificate /etc/nginx/ssl/origin.pem;
+    ssl_certificate_key /etc/nginx/ssl/origin.key;
+}
+
+
+server {
     if ($host = api.tathva.org) {
         return 301 https://$host$request_uri;
     } # managed by Certbot

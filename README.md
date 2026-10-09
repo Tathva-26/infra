@@ -7,6 +7,8 @@ App repos only **build** images. This repo decides **what runs**.
 | `tathva-postgres` | `postgres:16-alpine` | none | `tathva` + `hackathon` |
 | `tathva-backend` | `ghcr.io/tathva-26/tathva-backend-26:admin-panel` | `127.0.0.1:8000` | `tathva` |
 | `hackathon-backend` | `ghcr.io/tathva-26/tathva-26-hackathon-backend:latest` | `127.0.0.1:8080` | `hackathon` |
+| `tify-map-api` | `ghcr.io/tathva-26/tathva-map-api:latest` (profile `tify`) | `127.0.0.1:8787` | — (SQLite volume) |
+| `tify-whatsapp` | `ghcr.io/tathva-26/tify-backend-whatsapp:latest` (profile `tify`) | none | — |
 | `tathva-postgres-exporter` | `prometheuscommunity/postgres-exporter:v0.20.1` | `127.0.0.1:9187` | — (scrapes `tathva`) |
 | `tathva-redis-exporter` | `oliver006/redis_exporter:v1.92.0` | `127.0.0.1:9121` | — |
 | `tathva-node-exporter` | `prom/node-exporter:v1.12.1` | `127.0.0.1:9100` | — |
@@ -46,6 +48,18 @@ docker compose up -d backend-v2 hackathon-backend
 ```
 
 Order doesn't matter: backends retry until postgres is healthy.
+
+## Campus map + WhatsApp bridge
+
+`map-api` and `whatsapp` sit behind the `tify` profile, so a plain
+`docker compose up -d` ignores them. They need `map-api.env` and
+`whatsapp.env` (copy the `.example` files). The images come from GHCR like
+everything else; the `tathva-map` and `tify_backend` repos build them on push.
+Bring-up order and the one-time QR scan are in the
+`tify-backend` README under "Deploying with the infra repo".
+
+`whatsapp` is deliberately not published or proxied: its inbound routes have
+no auth.
 
 ## Backup
 
@@ -139,9 +153,9 @@ containerized here). Proxy each hostname to its loopback port with TLS.
 
 | File | Host path | Purpose |
 |---|---|---|
-| `nginx/tathva` | `/etc/nginx/sites-available/tathva` (symlinked into `sites-enabled/`) | Server blocks for `api.tathva.org` and `api-hack.tathva.org`. TLS via Certbot origin cert, proxies to `tathva-backend` (`:8000`) / `hackathon-backend` (`:8080`), `client_max_body_size` per upstream, honeypot `/​.env` routes. |
+| `nginx/tathva` | `/etc/nginx/sites-available/tathva` (symlinked into `sites-enabled/`) | Server blocks for `api.tathva.org`, `api-hack.tathva.org` and `map-api.tathva.org` (-> `tify-map-api` on `:8787`). TLS via Certbot origin cert, proxies to `tathva-backend` (`:8000`) / `hackathon-backend` (`:8080`), `client_max_body_size` per upstream, honeypot `/​.env` routes. |
 | `nginx/cloudflare.conf` | `/etc/nginx/conf.d/cloudflare.conf` | `set_real_ip_from` for Cloudflare's IP ranges + `CF-Connecting-IP`, so `$remote_addr` / rate limiting see the real client IP, not Cloudflare's edge IP. |
-| `nginx/ratelimit.conf` | `/etc/nginx/conf.d/ratelimit.conf` | Defines the `api` `limit_req_zone` (15r/s, burst 100) referenced by `tathva`. |
+| `nginx/ratelimit.conf` | `/etc/nginx/conf.d/ratelimit.conf` | Defines the `api` (15r/s) and `map` (100r/s) `limit_req_zone`s referenced by `tathva`. |
 
 `cloudflare.conf` and `ratelimit.conf` must load before `tathva`
 references them — `conf.d/*.conf` is included from `nginx.conf`'s `http {}`
