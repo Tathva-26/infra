@@ -102,6 +102,55 @@ services:
       retries: 3
       start_period: 60s
 
+  # ---- Campus map + WhatsApp bridge (profile `tify`) ----
+
+  map-api:
+    profiles: ["tify"]
+    image: ghcr.io/tathva-26/tathva-map-api:latest
+    container_name: tify-map-api
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "127.0.0.1:8787:8787" # loopback only; nginx terminates TLS
+    env_file:
+      - map-api.env # SESSION_SECRET
+    environment:
+      DB_PATH: /data/tathva.db
+      HOST: 0.0.0.0
+      PORT: 8787
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "1" # exactly one hop: host nginx
+    volumes:
+      - tify_map_data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  whatsapp:
+    profiles: ["tify"]
+    image: ghcr.io/tathva-26/tify-backend-whatsapp:latest
+    container_name: tify-whatsapp
+    # A rejected login is a hard exit; unbounded retries would trip map-api's
+    # login limiter and lock organisers out.
+    restart: on-failure:3
+    logging: *default-logging
+    depends_on:
+      map-api:
+        condition: service_healthy
+    env_file:
+      - whatsapp.env # GEMINI_API_KEY, MAP_ADMIN_PASS, TARGET_GROUP_ID
+    environment:
+      MAP_API_URL: http://map-api:8787
+      MAP_REPO_PATH: /map
+      WHATSAPP_ENABLED: "true"
+      WHATSAPP_SESSION: /session
+      PORT: 4000
+    volumes:
+      - tify_whatsapp_session:/session # linked-device login; losing it means a rescan
+
   # ---- Monitoring: exporters + Prometheus + Grafana ----
 
   postgres-exporter:
@@ -205,3 +254,7 @@ volumes:
     name: tathva-26_prometheus_data
   grafana_data:
     name: tathva-26_grafana_data
+  tify_map_data:
+    name: tathva-26_tify_map_data
+  tify_whatsapp_session:
+    name: tathva-26_tify_whatsapp_session
